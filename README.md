@@ -57,3 +57,5 @@ Open the URL shown in the terminal (hold ctrl + click).
 - Tasks are stored in `localStorage` under the key `personal-task-manager-tasks`
 - Clearing site data resets the task list
 - The `server/` folder is intentionally unused for this week
+- Had to add an empty file for the server folder to push to github
+
