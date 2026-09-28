@@ -49,7 +49,7 @@ const FilterDropdown = <T extends string>({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between gap-2 min-w-40 border-2 border-[#D3B5EB] rounded-lg px-3 py-2 sm:py-2.5 bg-white text-[#292929] text-[14px] sm:text-[16px] font-medium hover:border-[#974FD0] transition-colors cursor-pointer"
+        className="flex items-center justify-between gap-2 min-w-10 sm:min-w-40 border-2 border-[#D3B5EB] rounded-lg px-3 py-2 sm:py-2.5 bg-white text-[#292929] text-[12px] sm:text-[16px] font-medium hover:border-[#974FD0] transition-colors cursor-pointer"
       >
         <span>
           {label}: <span className="text-[#974FD0]"> {value}</span>
@@ -177,7 +177,7 @@ const TaskCard: React.FC<{
           <hr className="border-t-2 border-[#D3B5EB]" />
         </div>
 
-        {/* Title (uppercase) + description (max 3 lines) */}
+        {/* Title (capitalize) + description (max 3 lines) */}
         <div className="flex-1 flex flex-col gap-2 items-start text-left min-w-0 w-full">
           <h4
             className={`w-full min-w-0 truncate text-[20px] sm:text-[28px] md:text-[32px] text-[#292929] tracking-wide capitalize ${
@@ -187,7 +187,7 @@ const TaskCard: React.FC<{
             {task.title}
           </h4>
           <p
-            className={`w-full min-w-0 line-clamp-3 text-[#737171] text-[14px] sm:text-[18px] md:text-[20px] font-normal leading-[130%] text-start ${
+            className={`w-full min-w-0 truncate text-[#737171] text-[14px] sm:text-[18px] md:text-[20px] font-normal leading-[130%] text-start ${
               isDone ? "line-through" : ""
             }`}
           >
@@ -239,28 +239,28 @@ const MyTasks: React.FC = () => {
   return (
     <div className="w-full py-6 sm:py-8 px-4 sm:px-8 md:px-16 lg:px-42.5 flex flex-col gap-6 sm:gap-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <h3 className="font-medium text-[28px] md:text-[40px] text-[#292929] tracking-[0%] text-left">
           My Tasks
         </h3>
         <Link
           to="/newtask"
-          className="flex gap-2 sm:gap-4 items-center cursor-pointer self-start sm:self-auto"
+          className="flex gap-2 sm:gap-4 items-center cursor-pointer"
         >
           <FiPlus className="text-[#974FD0] h-5 w-5 sm:h-6 sm:w-6" />
-          <h5 className="text-[#974FD0] text-[18px] sm:text-[24px] font-medium tracking-[0%]">
+          <h5 className="text-[#974FD0] text-[14px] sm:text-[24px] font-medium tracking-[0%]">
             Add New Task
           </h5>
         </Link>
       </div>
 
       {/* Filter row --> Filter by: + Categories + Completion Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <span className="text-[14px] sm:text-[19px] font-medium text-[#292929] shrink-0">
           Filter by:
         </span>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex gap-3 sm:gap-4">
           <FilterDropdown
             label="Categories"
             value={categoryFilter}

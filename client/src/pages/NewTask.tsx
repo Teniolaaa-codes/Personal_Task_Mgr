@@ -17,7 +17,7 @@ const NewTask: React.FC = () => {
     category: "Work",
   });
 
-  // Inline field-level errors (no alert popups)
+  // Inline field-level errors
   const [errors, setErrors] = useState<
     Partial<Record<keyof TaskFormValues, string>>
   >({});
@@ -32,7 +32,7 @@ const NewTask: React.FC = () => {
     });
   };
 
-  /** Validate all required fields and due-date constraint. */
+  // Validate all required fields and due-date constraint.
   const validate = (): boolean => {
     const next: Partial<Record<keyof TaskFormValues, string>> = {};
 
@@ -59,29 +59,29 @@ const NewTask: React.FC = () => {
       dueDate: form.dueDate,
       category: form.category,
     });
-    // Submit navigates to My Tasks page as required
+    // Submit navigates to My Tasks page
     navigate("/mytasks");
   };
 
   return (
-    <div className="w-full pt-5 sm:pt-12 px-5 pb-8 lg:px-42.5 flex flex-col gap-4 lg:gap-15 justify-center items-center ">
+    <div className="w-full pt-5 md:pt-9 lg:pt-12 px-5 pb-8 sm:px-8 md:px-16 lg:px-42.5 flex flex-col gap-4 sm:gap-6 md:gap-8 lg:gap-15 justify-center items-center ">
       {/* Back link */}
-      <div className="flex gap-1 sm:gap-3 items-center w-full text-start ">
+      <div className="flex gap-1 sm:gap-1.5 lg:gap-3 items-center w-full text-start ">
         <Link to="/mytasks" className="cursor-pointer">
-          <FaChevronLeft className="text-[8px] sm:text-[24px] text-[#292929]" />
+          <FaChevronLeft className="text-[8px] sm:text-[16px] md:text-[20px] lg:text-[24px] text-[#292929]" />
         </Link>
-        <h3 className="font-medium text-[12px] sm:text-[30px] text-[#292929] ">
+        <h3 className="font-medium text-[12px] sm:text-[21px] lg:text-[30px] text-[#292929] ">
           New Task
         </h3>
       </div>
 
       {/* Form content */}
       <form
-        className="w-full lg:w-275 border-2 border-[#D3B5EB] bg-[#f9f1ff] rounded-[10px] px-14 py-12 flex flex-col "
+        className="w-78.5 sm:w-132.5 md:w-147.5 lg:w-152.5 xl:w-215 2xl:w-275 border-2 border-[#D3B5EB] bg-[#f9f1ff] rounded-[10px] px-2.5 py-5 sm:px-5 md:px-7 sm:py-8 2xl:px-14 lg:py-12 flex flex-col "
         onSubmit={handleSubmit}
         noValidate
       >
-        <fieldset className="flex flex-col gap-12">
+        <fieldset className="flex flex-col gap-6.5 sm:gap-8 md:gap-10 lg:gap-12">
           {/* Task Title */}
           <div className="relative ">
             <input
@@ -91,13 +91,14 @@ const NewTask: React.FC = () => {
               value={form.title}
               onChange={(e) => updateField("title", e.target.value)}
               placeholder="E.g Project Defense, Assignment..."
-              className={`w-full border-2 border-[#D3B5EB] rounded-[5px] px-16 p-6 text-[#292929] text-[24px] hover:border-[#974FD0] outline-none placeholder:text-[#CCCCCC] placeholder:text-[22px] placeholder:font-normal focus:border-[#974FD0] ${
+              className={`w-full border-2 border-[#D3B5EB] rounded-[5px] px-4.5 py-2 sm:px-7.75 md:px-12 sm:py-3 md:py-3.5 lg:px-16 lg:py-5 text-[#292929] text-[14px] sm:text-[16px] md:text-[20px] lg:text-[24px] hover:border-[#974FD0] outline-none placeholder:text-[#CCCCCC] placeholder:text-[10px] sm:placeholder:text-[14px] md:placeholder:text-[18px] lg:placeholder:text-[22px] placeholder:font-normal focus:border-[#974FD0] ${
                 errors.title ? "border-red-400" : "border-[#D3B5EB]"
               }`}
             />
+            {/* Floating label */}
             <label
               htmlFor="taskTitle"
-              className="absolute left-16 -top-5 bg-[#f9f1ff] text-[16px] sm:text-[24px] font-medium rounded-md text-[#974FD0]/70 "
+              className="absolute left-5 -top-2.5 sm:-top-3 md:-top-4.25 sm:left-8 md:left-12 lg:left-16 lg:-top-5 bg-[#f9f1ff] text-[14px] sm:text-[18px] md:text-[21px] lg:text-[24px] font-medium rounded-md text-[#974FD0]/70 "
             >
               Task Title *
             </label>
@@ -115,7 +116,7 @@ const NewTask: React.FC = () => {
               rows={7}
               onChange={(e) => updateField("description", e.target.value)}
               placeholder="Briefly describe your task..."
-              className={`w-full border-2 border-[#D3B5EB] rounded-[5px] px-16 pt-6.75 pb-6 text-[#292929] text-[18px] hover:border-[#974FD0] outline-none placeholder:text-[#CCCCCC] placeholder:text-[22px] placeholder:font-normal focus:border-[#974FD0] resize-none ${
+              className={`w-full border-2 border-[#D3B5EB] rounded-[5px] px-4.5 pt-2 pb-0.5 sm:px-7.5 md:px-11.5 lg:px-16 sm:pt-4 lg:pt-6.75 sm:pb-3 md:pb-4 lg:pb-6 text-[#292929] text-[12px] sm:text-[18px] hover:border-[#974FD0] outline-none placeholder:text-[#CCCCCC] placeholder:text-[10px] sm:placeholder:text-[22px] placeholder:font-normal focus:border-[#974FD0] resize-none ${
                 errors.description ? "border-red-400" : "border-[#B8B6B6]"
               }`}
             />
@@ -123,7 +124,7 @@ const NewTask: React.FC = () => {
             {/* Floating Label */}
             <label
               htmlFor="description"
-              className="absolute left-16 font-medium -top-4 bg-[#f9f1ff] text-[#974FD0]/70 text-[16px] sm:text-[24px]"
+              className="absolute left-5 -top-2.5 sm:-top-3 md:-top-4.25 sm:left-8 md:left-12 lg:left-16 lg:-top-5 bg-[#f9f1ff] text-[14px] sm:text-[18px] md:text-[21px] lg:text-[24px] font-medium rounded-md text-[#974FD0]/70 "
             >
               Description *
             </label>
@@ -139,14 +140,14 @@ const NewTask: React.FC = () => {
           <div className="w-full">
             {/* Field block */}
             <div
-              className={`relative flex flex-col items-start w-full rounded-md border-2 hover:border-[#974FD0] px-8 py-6 text-lg ${
+              className={`relative flex flex-col items-start w-full rounded-md border-2 hover:border-[#974FD0] px-2 sm:px-4 md:px-6 pb-2 sm:py-4 pt-3 lg:px-8 lg:py-6 text-lg ${
                 errors.dueDate ? "border-red-400" : "border-[#D3B5EB]"
               }`}
             >
               {/* Floating label */}
               <label
                 htmlFor="dueDate"
-                className="absolute z-20 -top-4.75 left-16 bg-[#f9f1ff] text-[22px] font-medium text-[#974FD0]/70"
+                className="absolute left-5 -top-2.5 sm:-top-3.5 md:-top-4.25 sm:left-8 md:left-12 lg:left-16 lg:-top-5 bg-[#f9f1ff] text-[14px] sm:text-[18px] md:text-[21px] lg:text-[24px] font-medium rounded-md text-[#974FD0]/70 "
               >
                 Due Date *
               </label>
@@ -157,7 +158,7 @@ const NewTask: React.FC = () => {
                 min={today}
                 value={form.dueDate}
                 onChange={(e) => updateField("dueDate", e.target.value)}
-                className="w-full text-[18px] pl-[33.25px] pr-8.75 rounded-sm border border-[#974FD0]/30 outline-[#974FD0]/50 cursor-pointer"
+                className="w-full text-sm sm:text-[15px] pl-2.75 sm:pl-3.5 md:pl-5.75 pr-2 sm:pr-3 md:pr-4.5 py-1 lg:text-[18px] lg:pl-[33.25px] lg:pr-8.75 rounded-sm border border-[#974FD0]/30 outline-[#974FD0]/50 cursor-pointer"
               />
             </div>
             {/* Due date error */}
@@ -168,14 +169,14 @@ const NewTask: React.FC = () => {
             )}
           </div>
 
-          {/* Category select */}
-          <div className="relative border-2 border-[#D3B5EB] rounded-[5px] px-4 sm:px-8 md:px-14 pt-7 pb-5 hover:border-[#974FD0]  ">
+          {/* Category selection */}
+          <div className="relative border-2 border-[#D3B5EB] rounded-[5px] px-4 sm:px-8 md:px-12 lg:pl-16 xl:px-12 py-4 sm:pt-5 sm:pb-3.5 md:pb-4 lg:pt-7 lg:pb-5 hover:border-[#974FD0]  ">
             {/* Floating Label */}
-            <p className=" absolute z-20 bg-[#f9f1ff] mb-3 text-[16px] sm:text-[22px] text-[#974FD0]/70 -top-4 left-15 font-medium">
+            <p className="absolute left-5 -top-2.5 sm:-top-3.5 md:-top-4.25 sm:left-8 md:left-12 lg:left-16 lg:-top-5 bg-[#f9f1ff] text-[14px] sm:text-[18px] md:text-[21px] lg:text-[24px] font-medium rounded-md text-[#974FD0]/70 ">
               Categories *
             </p>
             {/* All Categories*/}
-            <div className="flex flex-wrap gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4">
               {ALL_CATEGORIES.map((cat) => {
                 const styles = CATEGORY_STYLES[cat];
                 const selected = form.category === cat;
@@ -183,8 +184,8 @@ const NewTask: React.FC = () => {
                   <label
                     key={cat}
                     className={`cursor-pointer select-none
-                      px-5 py-1 rounded-full border-2
-                      text-[12px] sm:text-[18px] font-medium
+                      xl:px-5 py-1 px-1 sm:px-2.5 sm:py-1.5 sm:text-[14px] md:px-4 md:text-[16px] rounded-full border-2
+                      text-[12px] xl:text-[18px] font-medium
                       transition-transform duration-200 ease-out
                       hover:scale-105
                       ${styles.text} ${styles.bg} ${styles.border}
@@ -215,7 +216,7 @@ const NewTask: React.FC = () => {
           {/* Submit button */}
           <button
             type="submit"
-            className="w-full bg-[#974FD0] cursor-pointer hover:bg-[#6B3399] text-white text-2xl mt-5 font-semibold py-4 rounded-lg transition-colors"
+            className="w-full bg-[#974FD0] cursor-pointer hover:bg-[#6B3399] text-white text-[14px] sm:text-[16px] md:text-[20px] lg:text-2xl lg:mt-5 font-semibold py-2 sm:py-3 lg:py-4 rounded-sm sm:rounded-md lg:rounded-lg transition-colors"
           >
             Done
           </button>
@@ -226,7 +227,7 @@ const NewTask: React.FC = () => {
       <div className="text-center mt-6">
         <a
           href="#"
-          className="font-normal text-[18px] sm:text-[24px] underline text-[#974FD0] cursor-pointer hover:text-[#6b3399] "
+          className="font-normal text-[18px] sm:text-[20px] md:text-[22px] lg:text-[24px] underline text-[#974FD0] cursor-pointer hover:text-[#6b3399] "
         >
           Back To Top
         </a>

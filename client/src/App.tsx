@@ -1,5 +1,4 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import "./App.css";
 import NavBar from "./components/NavBar";
 import HomePage from "./pages/HomePage";
 import NewTask from "./pages/NewTask";
@@ -23,5 +22,3 @@ function App() {
 }
 
 export default App;
-
-// https://personal-task-manager-1-qlkp.onrender.com

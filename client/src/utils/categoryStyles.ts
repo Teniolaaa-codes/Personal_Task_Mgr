@@ -1,7 +1,3 @@
-// ADDED: Shared category color mapping used by NewTask, EditTask, and MyTasks cards.
-// Colors: Work=cyan, Important=yellow, Urgent=red, Personal=indigo
-// Each category has text, light bg, border, and selected styles.
-
 import type { TaskCategory } from "../types/tasks";
 
 export const CATEGORY_STYLES: Record<
