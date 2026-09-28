@@ -92,13 +92,15 @@ const EditTask: React.FC = () => {
 
   if (notFound) {
     return (
-      <div className="w-full py-12 px-4 text-center">
-        <p className="text-[20px] text-[#9C9C9C] mb-4">Task not found.</p>
+      <div className="mt-30 p-16 mx-auto text-center border-2 border-[#D3B5EB] rounded-lg bg-[#FAF9FB] flex flex-col items-center gap-5 ">
+        <p className="px-7.5 text-[18px] sm:text-[22px] text-[#9C9C9C] ">
+          Task not found. Go back to 👇
+        </p>
         <Link
           to="/mytasks"
-          className="text-[#974FD0] underline hover:text-[#6B3399]"
+          className="inline-block mt-4 text-[#974FD0] underline text-[16px] sm:text-[24px] hover:text-[#6B3399]"
         >
-          Back to My Tasks
+          My Tasks
         </Link>
       </div>
     );

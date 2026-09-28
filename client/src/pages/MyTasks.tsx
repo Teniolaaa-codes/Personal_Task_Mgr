@@ -279,7 +279,7 @@ const MyTasks: React.FC = () => {
       {/* Task list — empty by default + when no tasks */}
       <div className="flex flex-col gap-6 sm:gap-8">
         {filtered.length === 0 ? (
-          <div className="border-2 border-[#D3B5EB] rounded-lg bg-[#FAF9FB]  text-center py-16 flex flex-col items-center gap-5 text-[#9C9C9C]">
+          <div className="border-2 border-[#D3B5EB] rounded-lg bg-[#FAF9FB] text-center py-16 flex flex-col items-center gap-5 text-[#9C9C9C]">
             <p className="px-7.5 text-[18px] sm:text-[22px]">
               {tasks.length === 0
                 ? "No tasks yet. Click the button below to create your first task!👇"
