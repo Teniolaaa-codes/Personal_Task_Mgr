@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Secular+One&family=Signika+Negative:wght@300..700&display=swap');
+@import "tailwindcss";
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+
+body {
+  font-family: "Signika Negative", sans-serif;
+  background-color: #F5EEFB80;
+}
