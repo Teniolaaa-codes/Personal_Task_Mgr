@@ -42,7 +42,7 @@ Edit `.env`:
 
 ```
 PORT=4001
-MONGO_URI=your_mongodb_
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=add_your_long_random_jwt_secret
 JWT_EXPIRES_IN=5d
 ```
