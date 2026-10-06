@@ -1,4 +1,3 @@
-```markdown
 # Personal Task Manager
 
 Full-stack personal task manager: a React client for managing tasks and an Express API with authentication, authorization, and user-scoped data.
@@ -114,4 +113,3 @@ Open the URL shown in the terminal (hold ctrl + click).
 - Every task query is scoped with `user: req.user._id`.
 - Keep `.env` out of Git (see `server/.gitignore`).
 
----
