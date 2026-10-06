@@ -6,9 +6,9 @@ Full-stack personal task manager: a React client for managing tasks and an Expre
 
 ## Overview
 
-| Layer      | Responsibility                                                  |
-| ---------- | --------------------------------------------------------------- |
-| **Client** | UI to create, list, filter, edit, complete, and delete tasks    |
+| Layer | Responsibility |
+|--------|----------------|
+| **Client** | UI to create, list, filter, edit, complete, and delete tasks |
 | **Server** | REST API with JWT auth; each user only accesses their own tasks |
 
 **Week 1 (client):** Foundational CRUD UI (React + TypeScript + Tailwind).  
@@ -117,3 +117,4 @@ Open the URL shown in the terminal (hold ctrl + click).
 - JWT required on all task routes.
 - Every task query is scoped with `user: req.user._id`.
 - Keep `.env` out of Git (see `server/.gitignore`).
+
