@@ -1,29 +1,105 @@
 # Personal Task Manager
-A beginner-friendly CRUD app for creating, viewing, editing, completing, and filtering personal tasks.
 
-Built for **Tech Studio Internship Week 1 task – Foundational CRUD Application.**
+Full-stack personal task manager: a React client for managing tasks and an Express API with authentication, authorization, and user-scoped data.
+
+---
+
+## Overview
+
+| Layer      | Responsibility                                                  |
+| ---------- | --------------------------------------------------------------- |
+| **Client** | UI to create, list, filter, edit, complete, and delete tasks    |
+| **Server** | REST API with JWT auth; each user only accesses their own tasks |
+
+**Week 1 (client):** Foundational CRUD UI (React + TypeScript + Tailwind).  
+**Week 2 (server):** Backend build with Authentication, authorization, and user-scoped task CRUD (tested with Postman).
+
+---
 
 ## Features
 
-- Create tasks with title, description, due date, and category
-- Edit and delete existing tasks
-- Mark tasks as complete / incomplete
+### Client
+
+- Create, view, edit, and delete tasks
+- Fields: title, description, due date, category, completion status
+- Categories: Work, Important, Urgent, Personal
+- Form validation (required fields; due date not in the past)
 - Filter by category and completion status
-- Form validation (all fields required; due date cannot be in the past)
-- Responsive UI (mobile → desktop)
-- Data persisted in the browser via localStorage (My Tasks starts empty)
-  
-## Tech Stack
+- Responsive layout
+- Inline errors
 
-- **React** (functional components + hooks)
-- **TypeScript**
-- **Tailwind CSS**
-- **React Router**
-- **Vite**
-- **react-icons**
+### Server
 
+- User registration and login (JWT)
+- Protected task routes (Bearer token required)
+- User-scoped CRUD (User A cannot access User B’s tasks)
+- Task filters: `?category=` and `?completed=`
+- Password hashing with bcrypt
 
-### Run locally
+---
+
+## Tech stack
+
+**Client**
+
+- React (functional components + hooks)
+- TypeScript
+- Tailwind CSS
+- React Router
+- Vite
+- react-icons
+
+**Server**
+
+- Node.js + Express
+- MongoDB + Mongoose
+- JSON Web Tokens (JWT)
+- bcryptjs
+- dotenv, cors
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js (v18+ recommended)
+- MongoDB (local) **or** MongoDB Atlas
+- npm
+
+### 1. Clone the repo
+
+```bash
+https://github.com/Teniolaaa-codes/Personal_Task_Mgr.git
+
+cd Personal_Task_Mgr
+```
+
+### 2. Server setup
+
+```bash
+cd server
+npm install
+```
+
+Edit `.env`:
+
+```
+PORT=4001
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=add_your_long_random_jwt_secret
+JWT_EXPIRES_IN=5d
+```
+
+Run the server:
+
+```bash
+npm run dev
+```
+
+Base URL: `http://localhost:4001`
+
+### 3. Client setup
 
 ```bash
 cd client
@@ -33,29 +109,11 @@ npm run dev
 
 Open the URL shown in the terminal (hold ctrl + click).
 
-## Usage
-
-1. **Home** — landing page; go to My Tasks or New Task from the nav.
-2. **New Task** — fill title, description, category, and due date
-3. **Done button** saves and navigates to My Tasks.
-4. **My Tasks** — list, filter, complete, edit, or delete tasks.
-5. **Edit Task** — update a task and save; returns to My Tasks.
-
-### Validation
-
-- Title, description, category, and due date are required
-- Due date cannot be in the past
-- Errors show inline under the field
-
-### Filtering
-
-- **Categories:** All, Work, Important, Urgent, Personal
-- **Completion status:** All, Incomplete, Complete
+---
 
 ## Notes
 
-- Tasks are stored in `localStorage` under the key `personal-task-manager-tasks`
-- Clearing site data resets the task list
-- The `server/` folder is intentionally unused for this week
-- Had to add an empty file for the server folder to push to github
-
+- Passwords are hashed with bcrypt (never stored plain).
+- JWT required on all task routes.
+- Every task query is scoped with `user: req.user._id`.
+- Keep `.env` out of Git (see `server/.gitignore`).
