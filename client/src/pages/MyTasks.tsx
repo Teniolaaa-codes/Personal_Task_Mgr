@@ -1,14 +1,32 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { FiPlus, FiChevronDown } from "react-icons/fi";
 import { LuTrash2 } from "react-icons/lu";
 import { Link } from "react-router-dom";
-import { useTasks } from "../hooks/useTasks";
 import type { Task, TaskCategory } from "../types/tasks";
 import { ALL_CATEGORIES, CATEGORY_STYLES } from "../utils/categoryStyles";
 import { FaRegEdit } from "react-icons/fa";
+import { BiSearchAlt } from "react-icons/bi";
 
 type CategoryFilter = "All" | TaskCategory;
 type CompletionFilter = "All" | "Incomplete" | "Complete";
+
+// API base URL for task requests
+const API_BASE =
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  "http://localhost:4001";
+
+// Read JWT token from environment variable or localStorage
+function getAuthToken(): string | null {
+  const fromEnv = import.meta.env.VITE_DEMO_TOKEN as string | undefined;
+  if (fromEnv && fromEnv.trim()) return fromEnv.trim();
+  return localStorage.getItem("token");
+}
 
 // Format ISO date string as DD/MM/YYYY
 function formatDueDate(iso: string): string {
@@ -51,7 +69,7 @@ const FilterDropdown = <T extends string>({
         onClick={() => setOpen((o) => !o)}
         className="flex items-center justify-between gap-2 min-w-10 sm:min-w-40 border-2 border-[#D3B5EB] rounded-lg px-3 py-2 sm:py-2.5 bg-white text-[#292929] text-[12px] sm:text-[16px] font-medium hover:border-[#974FD0] transition-colors cursor-pointer"
       >
-        <span>
+        <span className="flex-wrap items-center gap-2 ">
           {label}: <span className="text-[#974FD0]"> {value}</span>
         </span>
         <FiChevronDown
@@ -70,7 +88,7 @@ const FilterDropdown = <T extends string>({
                   onChange(opt);
                   setOpen(false);
                 }}
-                className={`w-full text-left px-4 py-2.5 text-[14px] sm:text-[16px] hover:bg-[#F5EEFB] cursor-pointer transition-colors ${
+                className={`w-full text-left px-4 py-2.5 text-[12px] sm:text-[14px] md:text-[16px] hover:bg-[#F5EEFB] cursor-pointer transition-colors ${
                   value === opt
                     ? "bg-[#F5EEFB] text-[#974FD0] font-semibold"
                     : "text-[#292929]"
@@ -95,9 +113,9 @@ const FilterDropdown = <T extends string>({
 // Task card
 const TaskCard: React.FC<{
   task: Task;
-  onToggle: (id: string) => void;
+  onStatus: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ task, onToggle, onDelete }) => {
+}> = ({ task, onStatus, onDelete }) => {
   const styles = CATEGORY_STYLES[task.category];
   const isDone = task.completed;
 
@@ -113,7 +131,7 @@ const TaskCard: React.FC<{
           type="radio"
           checked={isDone}
           onChange={() => {}}
-          onClick={() => onToggle(task.id)}
+          onClick={() => onStatus(task.id)}
           aria-label={`Mark "${task.title}" as ${isDone ? "incomplete" : "complete"}`}
           className="w-5 h-5 sm:w-6 sm:h-6 accent-[#974FD0] cursor-pointer rounded"
         />
@@ -177,7 +195,7 @@ const TaskCard: React.FC<{
           <hr className="border-t-2 border-[#D3B5EB]" />
         </div>
 
-        {/* Title (capitalize) + description (max 3 lines) */}
+        {/* Title (capitalize) + description */}
         <div className="flex-1 flex flex-col gap-2 items-start text-left min-w-0 w-full">
           <h4
             className={`w-full min-w-0 truncate text-[20px] sm:text-[28px] md:text-[32px] text-[#292929] tracking-wide capitalize ${
@@ -211,23 +229,125 @@ const TaskCard: React.FC<{
 };
 
 const MyTasks: React.FC = () => {
-  const { tasks, deleteTask, toggleComplete } = useTasks();
+  // Tasks come from the API
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All");
-  const [completionFilter, setCompletionFilter] =
-    useState<CompletionFilter>("All");
+  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>("All");
 
-  // Apply filters
-  const filtered = useMemo(() => {
-    return tasks.filter((t) => {
-      const catOk = categoryFilter === "All" || t.category === categoryFilter;
-      const statusOk =
-        completionFilter === "All" ||
-        (completionFilter === "Complete" && t.completed) ||
-        (completionFilter === "Incomplete" && !t.completed);
-      return catOk && statusOk;
-    });
-  }, [tasks, categoryFilter, completionFilter]);
+  const [searchQuery, setSearchQuery] = useState("");
+  // Debounced search so we don't hit the API on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
+
+  // Load tasks from GET /api/tasks with search + filters
+  const loadTasks = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setError(
+        "No auth token. Add VITE_DEMO_TOKEN in client/.env or localStorage.setItem('token', '<jwt>').",
+      );
+      setTasks([]);
+      return;
+    }
+
+    const qs = new URLSearchParams();
+    if (debouncedSearch) qs.set("search", debouncedSearch);
+    if (categoryFilter !== "All") qs.set("category", categoryFilter);
+    if (completionFilter === "Complete") qs.set("completed", "true");
+    if (completionFilter === "Incomplete") qs.set("completed", "false");
+
+    const url = `${API_BASE}/api/tasks${qs.toString() ? `?${qs}` : ""}`;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load tasks");
+      }
+
+      // Map API tasks (id may be string) into client Task type
+      const mapped: Task[] = (data.tasks || []).map(
+        (t: {
+          id: string;
+          title: string;
+          description: string;
+          dueDate: string;
+          category: TaskCategory;
+          completed: boolean;
+        }) => ({
+          id: String(t.id),
+          title: t.title,
+          description: t.description,
+          dueDate: t.dueDate,
+          category: t.category,
+          completed: Boolean(t.completed),
+        }),
+      );
+      setTasks(mapped);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load tasks");
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, categoryFilter, completionFilter]);
+
+  useEffect(() => {
+    void loadTasks();
+  }, [loadTasks]);
+
+  // Toggle task status --> PATCH /api/tasks/:id/status
+  const handleStatus = async (id: string) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}/status`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Status toggle failed");
+      await loadTasks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Status toggle failed");
+    }
+  };
+
+  // Delete tasks by id --> DELETE /api/tasks/:id
+  const handleDelete = async (id: string) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to delete task");
+      await loadTasks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete task");
+    }
+  };
+
+  // Server already filtered; list is tasks as returned
+  const filtered = useMemo(() => tasks, [tasks]);
 
   const categoryOptions: CategoryFilter[] = ["All", ...ALL_CATEGORIES];
   const completionOptions: CompletionFilter[] = [
@@ -254,53 +374,75 @@ const MyTasks: React.FC = () => {
         </Link>
       </div>
 
-      {/* Filter row --> Filter by: + Categories + Completion Status */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        <span className="text-[14px] sm:text-[19px] font-medium text-[#292929] shrink-0">
-          Filter by:
-        </span>
+      {/* Search + Filters */}
+      <div className="flex justify-between gap-4 w-full">
+        {/* Search input - search tasks by title/description */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="text-[12px] sm:text-[14px] xl:text-[19px] font-medium text-[#292929] shrink-0">
+            Search:
+          </span>
+          <div className="relative 2xl:w-135 w-20 ">
+            <BiSearchAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9C9C9C] w-5 h-5 pointer-events-none" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks by title or description..."
+              aria-label="Search tasks"
+              className="w-full border-2 bg-white border-[#D3B5EB] rounded-lg pl-10 pr-4 py-2 sm:py-2.5 text-[12px] sm:text-[16px] text-[#292929] outline-none focus:border-[#974FD0] font-medium hover:border-[#974FD0]/60 focus:shadow-md focus:border-2 placeholder:text-[#CCCCCC] transition-colors "
+            />
+          </div>
+        </div>
 
-        <div className="flex gap-3 sm:gap-4">
-          <FilterDropdown
-            label="Categories"
-            value={categoryFilter}
-            options={categoryOptions}
-            onChange={setCategoryFilter}
-          />
-          <FilterDropdown
-            label="Completion"
-            value={completionFilter}
-            options={completionOptions}
-            onChange={setCompletionFilter}
-          />
+        {/* Filters: Categories + Completion Status */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="text-[12px] sm:text-[14px] xl:text-[19px] font-medium text-[#292929] shrink-0">
+            Filters:
+          </span>
+          <div className="flex gap-3 sm:gap-4">
+            <FilterDropdown
+              label="Categories"
+              value={categoryFilter}
+              options={categoryOptions}
+              onChange={setCategoryFilter}
+            />
+            <FilterDropdown
+              label="Completion"
+              value={completionFilter}
+              options={completionOptions}
+              onChange={setCompletionFilter}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Task list — empty by default + when no tasks */}
+      {/* Task list: empty by default + when no tasks */}
       <div className="flex flex-col gap-6 sm:gap-8">
-        {filtered.length === 0 ? (
+        {!loading && filtered.length === 0 ? (
           <div className="border-2 border-[#D3B5EB] rounded-lg bg-[#FAF9FB] text-center py-16 flex flex-col items-center gap-5 text-[#9C9C9C]">
             <p className="px-7.5 text-[18px] sm:text-[22px]">
-              {tasks.length === 0
-                ? "No tasks yet. Click the button below to create your first task!👇"
-                : "No tasks match the selected filters. Try a different combo!😊"}
+              {error
+                ? "Could not load tasks from the API."
+                : debouncedSearch ||
+                    categoryFilter !== "All" ||
+                    completionFilter !== "All"
+                  ? "No tasks match the selected filters or search. Try a different combo!😊"
+                  : "No tasks yet. Create one on the server (Postman) or  Click the button below to create your first task!👇"}
             </p>
-            {tasks.length === 0 && (
               <Link
                 to="/newtask"
                 className="inline-block mt-4 text-[#974FD0] underline text-[16px] sm:text-[24px] hover:text-[#6B3399]"
               >
                 Add New Task
               </Link>
-            )}
           </div>
         ) : (
           filtered.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
-              onToggle={toggleComplete}
-              onDelete={deleteTask}
+              onStatus={handleStatus}
+              onDelete={handleDelete}
             />
           ))
         )}

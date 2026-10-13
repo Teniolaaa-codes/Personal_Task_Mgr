@@ -30,6 +30,16 @@ async function myTasks(req, res) {
       filter.completed = false;
     }
 
+    // Search by title OR description (case-insensitive) --> Server-side search for the client UI
+    if (req.query.search && String(req.query.search).trim() !== "") {
+      const raw = String(req.query.search).trim();
+      // Escape special regex characters in the search string
+      const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "i");
+      filter.$or = [{ title: regex }, { description: regex }];
+    }
+    // The above search filter is applied only if the search query is non-empty; otherwise, all tasks for the user are returned.
+
     const tasks = await Task.find(filter).sort({ createdAt: -1 });
 
     return res.status(200).json({
