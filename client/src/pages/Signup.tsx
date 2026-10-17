@@ -1,10 +1,3 @@
-/**
- * WHAT:  Signup page — name, email, password → JWT
- * WHY:   New users need a UI to create an account
- * WHERE: Route /signup
- * HOW:   AuthContext.signup then navigate to /mytasks
- */
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
