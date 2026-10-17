@@ -29,7 +29,7 @@ export function useTasks() {
   }, [tasks]);
 
   // Create a new task
-  const addTask = useCallback((values: TaskFormValues) => {
+  const addNewTask = useCallback((values: TaskFormValues) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       ...values,
@@ -66,7 +66,7 @@ export function useTasks() {
 
   return {
     tasks,
-    addTask,
+    addNewTask,
     updateTask,
     deleteTask,
     toggleComplete,

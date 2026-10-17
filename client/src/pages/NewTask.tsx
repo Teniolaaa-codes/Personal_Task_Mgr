@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import type { TaskCategory, TaskFormValues } from "../types/tasks";
-import { useTasks } from "../hooks/useTasks";
 import { ALL_CATEGORIES, CATEGORY_STYLES } from "../utils/categoryStyles";
+import { AddNewTask } from "../api/taskAPI";
+import { useAuth } from "../context/authContext";
 
 const NewTask: React.FC = () => {
   const navigate = useNavigate();
-  const { addTask } = useTasks();
+  const { token } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
 
   const [form, setForm] = useState<TaskFormValues>({
@@ -21,6 +22,8 @@ const NewTask: React.FC = () => {
   const [errors, setErrors] = useState<
     Partial<Record<keyof TaskFormValues, string>>
   >({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const updateField = (field: keyof TaskFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -49,18 +52,27 @@ const NewTask: React.FC = () => {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    addTask({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      dueDate: form.dueDate,
-      category: form.category,
-    });
-    // Submit navigates to My Tasks page
-    navigate("/mytasks");
+    setSubmitError(null);
+    if (!validate() || !token) return;
+    setSubmitting(true);
+    try {
+      await AddNewTask(token, {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        dueDate: form.dueDate,
+        category: form.category,
+      });
+      // Submit navigates to My Tasks page
+      navigate("/mytasks");
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Could not create task",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -213,12 +225,20 @@ const NewTask: React.FC = () => {
             )}
           </div>
 
+          {/* Submit Error */}
+          {submitError && (
+            <p className="mb-4 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {submitError}
+            </p>
+          )}
+
           {/* Submit button */}
           <button
             type="submit"
+            disabled={submitting}
             className="w-full bg-[#974FD0] cursor-pointer hover:bg-[#6B3399] text-white text-[14px] sm:text-[16px] md:text-[20px] lg:text-2xl lg:mt-5 font-semibold py-2 sm:py-3 lg:py-4 rounded-sm sm:rounded-md lg:rounded-lg transition-colors"
           >
-            Done
+            {submitting ? "Saving…" : "Done"}
           </button>
         </fieldset>
       </form>

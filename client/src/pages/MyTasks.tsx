@@ -1,10 +1,4 @@
-import React, {
-  useMemo,
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { FiPlus, FiChevronDown } from "react-icons/fi";
 import { LuTrash2 } from "react-icons/lu";
 import { Link } from "react-router-dom";
@@ -12,21 +6,23 @@ import type { Task, TaskCategory } from "../types/tasks";
 import { ALL_CATEGORIES, CATEGORY_STYLES } from "../utils/categoryStyles";
 import { FaRegEdit } from "react-icons/fa";
 import { BiSearchAlt } from "react-icons/bi";
+import { useAuth } from "../context/authContext";
+import { deleteTaskApi, fetchTasks, statusTaskApi } from "../api/taskAPI";
 
 type CategoryFilter = "All" | TaskCategory;
 type CompletionFilter = "All" | "Incomplete" | "Complete";
 
 // API base URL for task requests
-const API_BASE =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  "http://localhost:4001";
+// const API_BASE =
+//   (import.meta.env.VITE_API_URL as string | undefined) ||
+//   "http://localhost:4001";
 
 // Read JWT token from environment variable or localStorage
-function getAuthToken(): string | null {
-  const fromEnv = import.meta.env.VITE_DEMO_TOKEN as string | undefined;
-  if (fromEnv && fromEnv.trim()) return fromEnv.trim();
-  return localStorage.getItem("token");
-}
+// function getAuthToken(): string | null {
+//   const fromEnv = import.meta.env.VITE_DEMO_TOKEN as string | undefined;
+//   if (fromEnv && fromEnv.trim()) return fromEnv.trim();
+//   return localStorage.getItem("token");
+// }
 
 // Format ISO date string as DD/MM/YYYY
 function formatDueDate(iso: string): string {
@@ -229,14 +225,14 @@ const TaskCard: React.FC<{
 };
 
 const MyTasks: React.FC = () => {
+  const { token } = useAuth();
   // Tasks come from the API
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All");
-  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>("All");
-
+  const [completionFilter, setCompletionFilter] =
+    useState<CompletionFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   // Debounced search so we don't hit the API on every keystroke
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -250,63 +246,29 @@ const MyTasks: React.FC = () => {
 
   // Load tasks from GET /api/tasks with search + filters
   const loadTasks = useCallback(async () => {
-    const token = getAuthToken();
-    if (!token) {
-      setError(
-        "No auth token. Add VITE_DEMO_TOKEN in client/.env or localStorage.setItem('token', '<jwt>').",
-      );
-      setTasks([]);
-      return;
-    }
-
-    const qs = new URLSearchParams();
-    if (debouncedSearch) qs.set("search", debouncedSearch);
-    if (categoryFilter !== "All") qs.set("category", categoryFilter);
-    if (completionFilter === "Complete") qs.set("completed", "true");
-    if (completionFilter === "Incomplete") qs.set("completed", "false");
-
-    const url = `${API_BASE}/api/tasks${qs.toString() ? `?${qs}` : ""}`;
-
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      const list = await fetchTasks({
+        token,
+        search: debouncedSearch || undefined,
+        category: categoryFilter,
+        completed:
+          completionFilter === "Complete"
+            ? "true"
+            : completionFilter === "Incomplete"
+              ? "false"
+              : undefined,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to load tasks");
-      }
-
-      // Map API tasks (id may be string) into client Task type
-      const mapped: Task[] = (data.tasks || []).map(
-        (t: {
-          id: string;
-          title: string;
-          description: string;
-          dueDate: string;
-          category: TaskCategory;
-          completed: boolean;
-        }) => ({
-          id: String(t.id),
-          title: t.title,
-          description: t.description,
-          dueDate: t.dueDate,
-          category: t.category,
-          completed: Boolean(t.completed),
-        }),
-      );
-      setTasks(mapped);
+      setTasks(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tasks");
       setTasks([]);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, categoryFilter, completionFilter]);
+  }, [token, debouncedSearch, categoryFilter, completionFilter]);
 
   useEffect(() => {
     void loadTasks();
@@ -314,15 +276,9 @@ const MyTasks: React.FC = () => {
 
   // Toggle task status --> PATCH /api/tasks/:id/status
   const handleStatus = async (id: string) => {
-    const token = getAuthToken();
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/tasks/${id}/status`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Status toggle failed");
+      await statusTaskApi(token, id);
       await loadTasks();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Status toggle failed");
@@ -331,23 +287,14 @@ const MyTasks: React.FC = () => {
 
   // Delete tasks by id --> DELETE /api/tasks/:id
   const handleDelete = async (id: string) => {
-    const token = getAuthToken();
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to delete task");
+      await deleteTaskApi(token, id);
       await loadTasks();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete task");
     }
   };
-
-  // Server already filtered; list is tasks as returned
-  const filtered = useMemo(() => tasks, [tasks]);
 
   const categoryOptions: CategoryFilter[] = ["All", ...ALL_CATEGORIES];
   const completionOptions: CompletionFilter[] = [
@@ -416,28 +363,34 @@ const MyTasks: React.FC = () => {
         </div>
       </div>
 
+      {/* Error + Loading */}
+      {error && (
+        <p className="text-left text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          {error}
+        </p>
+      )}
+      {loading && <p className="text-[#9C9C9C] text-[16px]">Loading tasks…</p>}
+
       {/* Task list: empty by default + when no tasks */}
       <div className="flex flex-col gap-6 sm:gap-8">
-        {!loading && filtered.length === 0 ? (
+        {!loading && tasks.length === 0 ? (
           <div className="border-2 border-[#D3B5EB] rounded-lg bg-[#FAF9FB] text-center py-16 flex flex-col items-center gap-5 text-[#9C9C9C]">
             <p className="px-7.5 text-[18px] sm:text-[22px]">
-              {error
-                ? "Could not load tasks from the API."
-                : debouncedSearch ||
-                    categoryFilter !== "All" ||
-                    completionFilter !== "All"
-                  ? "No tasks match the selected filters or search. Try a different combo!😊"
-                  : "No tasks yet. Create one on the server (Postman) or  Click the button below to create your first task!👇"}
+              {debouncedSearch ||
+              categoryFilter !== "All" ||
+              completionFilter !== "All"
+                ? "No tasks match the selected filters or search. Try a different combo!😊"
+                : "No tasks yet. Click the button below to create your first task!👇"}
             </p>
-              <Link
-                to="/newtask"
-                className="inline-block mt-4 text-[#974FD0] underline text-[16px] sm:text-[24px] hover:text-[#6B3399]"
-              >
-                Add New Task
-              </Link>
+            <Link
+              to="/newtask"
+              className="inline-block mt-4 text-[#974FD0] underline text-[16px] sm:text-[24px] hover:text-[#6B3399]"
+            >
+              Add New Task
+            </Link>
           </div>
         ) : (
-          filtered.map((task) => (
+          tasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}

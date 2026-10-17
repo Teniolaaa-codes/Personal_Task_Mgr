@@ -144,7 +144,7 @@ const NavBar: React.FC = () => {
                   className="absolute right-0 top-full mt-3 w-52 sm:w-60 bg-[#f9f1ff] border-2 border-[#D3B5EB] rounded-[10px] shadow-lg p-4 z-50 flex flex-col gap-3"
                 >
                   <div className="min-w-0">
-                                        <p className="text-[11px] sm:text-[14px] text-[#737171]">HI!👋</p>
+                                        <p className="text-[11px] sm:text-[14px] text-[#737171]">Hi!👋</p>
                     <p className="text-[14px] sm:text-[16px] font-semibold text-[#2D0050] truncate">
                       {user?.name || user?.email}
                     </p>

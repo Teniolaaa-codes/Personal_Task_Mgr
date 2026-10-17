@@ -2,16 +2,15 @@ import React, { useState, useEffect } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { TaskCategory, TaskFormValues } from "../types/tasks";
-import { useTasks } from "../hooks/useTasks";
 import { ALL_CATEGORIES, CATEGORY_STYLES } from "../utils/categoryStyles";
+import { GetTaskById, updateTaskApi } from "../api/taskAPI";
+import { useAuth } from "../context/authContext";
 
 const EditTask: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getTask, updateTask } = useTasks();
+  const { token } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
-
-  const existing = id ? getTask(id) : undefined;
 
   const [form, setForm] = useState<TaskFormValues>({
     title: "",
@@ -19,6 +18,12 @@ const EditTask: React.FC = () => {
     dueDate: "",
     category: "Work",
   });
+
+  // Store the original task data to compare for validation
+  const [originalDue, setOriginalDue] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Inline field-level errors
   const [errors, setErrors] = useState<
@@ -28,23 +33,34 @@ const EditTask: React.FC = () => {
 
   // Pre-fill form when task is found
   useEffect(() => {
-    if (!id) {
+    if (!id || !token) {
       setNotFound(true);
+      setLoading(false);
       return;
     }
-    const task = getTask(id);
-    if (!task) {
-      setNotFound(true);
-      return;
-    }
-    setForm({
-      title: task.title,
-      description: task.description,
-      dueDate: task.dueDate,
-      category: task.category,
-    });
-    setNotFound(false);
-  }, [id, getTask]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const task = await GetTaskById(token, id);
+        if (cancelled) return;
+        setForm({
+          title: task.title,
+          description: task.description,
+          dueDate: task.dueDate,
+          category: task.category,
+        });
+        setOriginalDue(task.dueDate);
+        setNotFound(false);
+      } catch {
+        if (!cancelled) setNotFound(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, token]);
 
   const updateField = (field: keyof TaskFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -62,11 +78,7 @@ const EditTask: React.FC = () => {
     if (!form.description.trim()) next.description = "Description is required";
     if (!form.dueDate) {
       next.dueDate = "Due date is required";
-    } else if (
-      form.dueDate < today &&
-      existing &&
-      form.dueDate !== existing.dueDate
-    ) {
+    } else if (form.dueDate < today && form.dueDate !== originalDue) {
       // Only reject if user changed the date to a past value; allow keeping original past due dates
       next.dueDate = "Due date cannot be in the past";
     }
@@ -75,20 +87,37 @@ const EditTask: React.FC = () => {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !existing) return;
+    if (!id || !token) return;
+    setSubmitError(null);
     if (!validate()) return;
-
-    updateTask(id, {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      dueDate: form.dueDate,
-      category: form.category,
-    });
-    // Submit navigates to My Tasks page
-    navigate("/mytasks");
+    setSubmitting(true);
+    try {
+      await updateTaskApi(token, id, {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        dueDate: form.dueDate,
+        category: form.category,
+      });
+      // Submit navigates to My Tasks page
+      navigate("/mytasks");
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Could not update task",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="w-full py-20 text-center text-[#9C9C9C] text-lg">
+        Loading task…
+      </div>
+    );
+  }
 
   if (notFound) {
     return (
@@ -198,11 +227,6 @@ const EditTask: React.FC = () => {
                 id="dueDate"
                 type="date"
                 required
-                min={
-                  existing && existing.dueDate < today
-                    ? existing.dueDate
-                    : today
-                }
                 value={form.dueDate}
                 onChange={(e) => updateField("dueDate", e.target.value)}
                 className="w-full text-sm sm:text-[15px] pl-2.75 sm:pl-3.5 md:pl-5.75 pr-2 sm:pr-3 md:pr-4.5 py-1 lg:text-[18px] lg:pl-[33.25px] lg:pr-8.75 rounded-sm border border-[#974FD0]/30 outline-[#974FD0]/50 cursor-pointer"
@@ -260,12 +284,20 @@ const EditTask: React.FC = () => {
             )}
           </div>
 
+          {/* Submit Error */}
+          {submitError && (
+            <p className="mb-4 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {submitError}
+            </p>
+          )}
+
           {/* Submit button */}
           <button
             type="submit"
+            disabled={submitting}
             className="w-full bg-[#974FD0] cursor-pointer hover:bg-[#6B3399] text-white text-[14px] sm:text-[16px] md:text-[20px] lg:text-2xl lg:mt-5 font-semibold py-2 sm:py-3 lg:py-4 rounded-sm sm:rounded-md lg:rounded-lg transition-colors"
           >
-            Done
+            {submitting ? "Saving…" : "Save changes"}
           </button>
         </fieldset>
       </form>

@@ -1,10 +1,3 @@
-/**
- * WHAT: Task CRUD + search against the Express API
- * WHY:  My Tasks / New / Edit must use the server so data is user-scoped and persistent
- * WHERE: Pages call these after AuthContext provides a JWT
- * HOW:  Bearer token on every request; optional ?search&category&completed
- */
-
 import type { Task, TaskCategory, TaskFormValues } from "../types/tasks";
 import { API_BASE, authHeaders } from "./config";
 
@@ -50,7 +43,7 @@ export async function fetchTasks(params: ListTasksParams): Promise<Task[]> {
   return ((data.tasks || []) as ApiTask[]).map(mapTask);
 }
 
-export async function fetchTaskById(token: string, id: string): Promise<Task> {
+export async function GetTaskById(token: string, id: string): Promise<Task> {
   const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
     headers: authHeaders(token),
   });
@@ -59,7 +52,7 @@ export async function fetchTaskById(token: string, id: string): Promise<Task> {
   return mapTask(data.task as ApiTask);
 }
 
-export async function createTask(
+export async function AddNewTask(
   token: string,
   values: TaskFormValues
 ): Promise<Task> {
@@ -97,12 +90,12 @@ export async function deleteTaskApi(token: string, id: string): Promise<void> {
   if (!res.ok) throw new Error(data.message || "Failed to delete task");
 }
 
-export async function toggleTaskApi(token: string, id: string): Promise<Task> {
-  const res = await fetch(`${API_BASE}/api/tasks/${id}/toggle`, {
+export async function statusTaskApi(token: string, id: string): Promise<Task> {
+  const res = await fetch(`${API_BASE}/api/tasks/${id}/status`, {
     method: "PATCH",
     headers: authHeaders(token),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Failed to toggle task");
+  if (!res.ok) throw new Error(data.message || "Failed to toggle task status");
   return mapTask(data.task as ApiTask);
 }
